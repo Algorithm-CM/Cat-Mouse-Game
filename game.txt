@@ -1,0 +1,296 @@
+
+import pygame
+import random
+import time
+from datetime import datetime
+
+
+pygame.init()
+
+
+
+size = [400, 700]
+screen = pygame.display.set_mode(size)
+
+title = "Cat VS Mouse"
+pygame.display.set_caption(title)
+
+
+clock = pygame.time.Clock()
+total_time = 20
+start_ticks = pygame.time.get_ticks()
+
+class obj:
+    def __init__(self):   #함수 실행 시 딸리는 함수들? 기능들?
+        self.x = 0
+        self.y = 0
+        self.move = 0
+    def put_img(self, address):
+        if address[-3:] == "png" :
+            self.img = pygame.image.load(address).convert_alpha()
+        else:
+            self.img = pygame.image.load(address)
+            self_imgx, self_imgy = self.img.get_size()
+    def change_size(self, imgx, imgy):
+       self.img = pygame.transform.scale(self.img, (imgx, imgy))
+       self.imgx, self.imgy = self.img.get_size()
+    def show(self):
+        screen.blit(self.img, (self.x, self.y))
+
+def crash(a, b):
+    if (a.x-b.imgx <= b.x) and (b.x <= a.x + a.imgx):
+        if (a.y-b.imgy <= b.y) and (b.y <= a.y+ a.imgy):
+            return True
+        else:
+            return False
+    else :
+        return False
+
+
+mouse = obj()
+mouse.put_img("E:/image/rmouse.png")
+mouse.change_size(80, 110)
+mouse.x = round(size[0]/2 - mouse.imgx/2)    #round는 자연수로 안 나누어질 수도 있으니까 반올림하려구 쓰는거
+mouse.y = size[1] - mouse.imgy - 5
+mouse.move = 5 #속도를 올리고 싶다면 이 값을 더 크게하기
+
+
+left_go = False
+right_go = False   # 키를 누르고 있지 않은 처음 상태는 False로 지정
+space_go = False
+
+
+t_list = [] #리스트를 사용하지 않으면 미사일이 하나만 발생, 그마저도 스페이스바를 다시 누르면 사라지고 다시 생김. 그래서 리스트 안에다가 넣어놓아야 함
+c_list = []
+        
+
+startback = pygame.image.load("E:/image/startback.jpg")
+ingameback = pygame.image.load("E:/image/ingameback.jpg")
+k = 0
+
+GO = 0 #게임오버
+kill = 0 #외계인하고 충돌하여 맞추었을 때
+loss = 0 # 외계인이 화면 밖으로 나갔을 때
+
+
+
+SG = 0
+while SG == 0:
+    clock.tick(60)
+    for event in pygame.event.get():
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                SG = 1
+                total_time = 20 # 시간 제한 설정 변수
+                start_ticks = pygame.time.get_ticks()
+    screen.blit(startback, (0, 0))
+
+    font = pygame.font.Font("C:/Users/조고은/AppData/Local/Microsoft/Windows/Fonts/BMJUA_otf.otf", 20)       #폰트 이름(저장소), 글씨크기
+    text = font.render("PRESS SPACE KEY TO START THE GAME", True, (0, 0, 0))  #이미지화 된 텍스트
+    screen.blit(text, (17, round(size[1]/2 + 275)))
+    pygame.display.flip()
+
+
+ 
+
+
+start_time = datetime.now()
+SG = 0
+while SG == 0:
+
+
+  
+    clock.tick(60)
+
+   
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            SG = 1
+            
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                left_go = True
+            elif event.key == pygame.K_RIGHT:
+                right_go = True
+            elif event.key == pygame.K_SPACE:
+                space_go = True
+                k = 0 #스페이스바를 처음 누를 때는 k=0으로 바뀌게 하는 것, 안그러면 k가 6의 배수일 때만 실행되는 아래 조건에 걸려서 스페이스바를 눌러도 실행이 안되는 경우가 생길 수 있음
+                
+        elif event.type == pygame.KEYUP:
+            if event.key == pygame.K_LEFT:
+                left_go = False
+            elif event.key == pygame.K_RIGHT:
+                right_go = False
+            elif event.key == pygame.K_SPACE:
+                space_go = False
+            
+                
+
+
+  
+    now_time = datetime.now()
+    delta_time = round((now_time - start_time). total_seconds())
+    
+
+    
+
+
+    
+    if left_go == True:
+        mouse.x -= mouse.move
+        if mouse.x <= 0 : #화면 밖으로 안 나가게 하기 위해 하는 장치
+            mouse.x = 0
+    elif right_go == True:
+       mouse.x += mouse.move
+       if mouse.x >= size[0] - mouse.imgx:   #이미지의 왼쪽 부분이 기준이기 때문에 그냥 size[0]으로 하면 화면 밖으로 나감
+            mouse.x = size[0] - mouse.imgx
+
+
+
+ 
+    if space_go == True and k % 6 == 0:   #미사일 발생, and 부터는 미사일일 너무 자주 발생하면 안되서 고치는 것
+        che = obj()
+        che.put_img("E:/image/rcheese.png")
+        che.change_size(30, 30)
+        #바로 아래문장에서 jer.x = tom.x는 같이 왼쪽으로 붙어서 정렬이 되어있는 상태, 따라서 우주선의 절반정도만큼 미사일이 오른쪽으로 움직여야 함.
+        #그런데 위와 같이 실행을 하면 미사일의 크기도 있기 때문에 약간 오른쪽으로 치우친 상태가 됨. 따라서 미사일의 절반 정도의 크기만큼 다시 왼쪽으로 움직여야 함
+        che.x = round(mouse.x + mouse.imgx/2 - che.imgx/2)                        #미사일들은 기본적으로 우주선, tom을 따라가면서 발생할 것임
+        che.y = mouse.y - che.imgy - 10                         #y값은 우주선보다 살짝 위에여야 함. 그 미사일의 크기만큼
+        che.move = 7
+        #속도를 올리고 싶다면 이 값을 더 크게하기
+        c_list.append(che)
+    k += 1
+
+
+    d_list = []
+    # 리스트에 저장한 미사일 꺼내서 이동시키기
+    for i in range(len(c_list)):
+        c = c_list[i]    # i가 0일 때는 첫번째 미사일, 1일 때는 두번째 미사일
+        c.y -= c.move
+        # 화면 밖으로 나가는 미사일 걸러내기. / 그냥 냅두면 메모리 많이 잡아먹음
+        if c.y <= -c.imgy:
+            d_list.append(i)
+    for d in d_list:
+        del c_list[d]
+
+
+
+  
+    if random.random() > 0.97:
+        cat = obj()
+        cat.put_img("E:/image/rcat.png")
+        cat.change_size(60, 60)
+        cat.x = random.randrange(0, size[0]-cat.imgx - round(cat.imgx/2))
+        cat.y = 10
+        cat.move = 1 #속도를 올리고 싶다면 이 값을 더 크게하기
+        t_list.append(cat)
+    d_list = [] #위에서 한 번 쓴 것이기 때문에 초기화 해주기!
+
+
+
+    for i in range(len(t_list)):
+        t = t_list[i]    # i가 0일 때는 첫번째 미사일, 1일 때는 두번째 미사일
+        t.y += t.move
+        # 화면 밖으로 나가는 미사일 걸러내기. / 그냥 냅두면 메모리 많이 잡아먹음
+        if t.y >= size[1]:
+            d_list.append(i)
+    for d in d_list:
+        del t_list[d]
+        loss += 1
+
+
+    
+
+    dt_list = []
+    dc_list = []
+    for n in range(len(t_list)):
+        for v in range(len(c_list)):
+            t = t_list[n]
+            c = c_list[v]
+            if crash(t, c) == True:
+                dt_list.append(n)
+                dc_list.append(v)
+    dt_list = list(set(dt_list))
+    dc_list = list(set(dc_list))
+
+    dt_list.reverse()
+    for dt in dt_list:
+        del t_list[dt]
+    dc_list.reverse()
+    for dc in dc_list:
+        del c_list[dc]
+        kill += 1
+
+
+   
+    for i in range(len(t_list)):
+        t = t_list[i]
+        if crash(t, mouse) == True:
+            SG = 1
+            GO = 1
+                
+
+    elapsed_time = (pygame.time.get_ticks() - start_ticks) / 1000
+
+    if total_time - elapsed_time <= 0:
+        game_result = "Time Over"
+        GO = 1
+        SG = 1    
+            
+        
+
+        
+
+
+
+
+    
+
+    screen.blit(ingameback , (0, 0))      #이거 back을 ingameback으로 바꿔서 변수설정, 배경 넣으며 될 듯
+    mouse.show()
+    for t in t_list:
+        t.show()
+    for c in c_list:
+        c.show()
+
+
+    font = pygame.font.Font("C:/Users/조고은/AppData/Local/Microsoft/Windows/Fonts/BMJUA_otf.otf", 20)       #폰트 이름(저장소), 글씨크기
+    text_kill = font.render("killed : {} loss : {}".format(kill, loss), True, (255, 255, 0))  #이미지화 된 텍스트
+    screen.blit(text_kill, (10, 5))
+
+    
+    text_time = font.render("time : {}".format(delta_time), True, (255, 255, 255))  #이미지화 된 텍스트
+    screen.blit(text_time, (size[0] - 80, 5))
+        
+
+
+
+    
+   
+    pygame.display.flip()
+
+
+
+while GO == 1:
+    clock.tick(60)
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            GO = 0
+
+    font = pygame.font.Font("C:/Windows/Fonts/ENBLBK.ttf", 40)       #폰트 이름(저장소), 글씨크기
+    text = font.render("GAME OVER", True, (255, 0, 0))  #이미지화 된 텍스트
+    screen.blit(text, (100, round(size[1]/2 - 50)))
+    pygame.display.flip()
+    
+
+pygame.quit()
+
+
+
+
+
+
+
+
+
+    
